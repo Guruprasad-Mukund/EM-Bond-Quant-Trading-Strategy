@@ -1,0 +1,10 @@
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+# Market-data files may be subject to licensing/redistribution restrictions.
+*.csv
+*.xlsx
+*.xls
