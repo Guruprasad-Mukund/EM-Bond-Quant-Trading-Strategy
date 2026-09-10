@@ -1,10 +1,14 @@
-# Data Sources
+# Raw Data
 
-The analysis uses daily market data from approximately 2016–2026.
+This directory contains the original market datasets collected before cleaning, database integration, and feature engineering.
 
-Variables:
+The source series correspond to:
 
-- EMB Price: Emerging Markets Bond ETF closing price
-- VIX: CBOE Volatility Index
-- Oil Price: U.S. crude oil price
-- Credit Spread: ICE BofA BB U.S. High Yield Index Option-Adjusted Spread
+- EMB ETF historical closing prices
+- Cboe VIX levels
+- U.S. crude oil prices
+- ICE BofA BB U.S. High Yield Option-Adjusted Spread
+
+The files were imported into PostgreSQL as separate tables and subsequently aligned by date.
+
+No return or change variables are calculated at this stage. Feature engineering is performed later in the Python notebook.
