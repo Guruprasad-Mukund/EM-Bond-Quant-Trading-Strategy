@@ -61,7 +61,6 @@ The dataset contains approximately **10 years of daily observations from 2016 th
 
 The final merged dataset contains:
 
-text
 date
 emb_price
 credit_spread
