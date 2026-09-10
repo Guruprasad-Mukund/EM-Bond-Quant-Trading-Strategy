@@ -1,10 +1,22 @@
+# Jupyter Notebook checkpoints
 .ipynb_checkpoints/
-__pycache__/
-*.pyc
-.env
-.DS_Store
 
-# Market-data files may be subject to licensing/redistribution restrictions.
-*.csv
-*.xlsx
-*.xls
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables / secrets
+.env
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
