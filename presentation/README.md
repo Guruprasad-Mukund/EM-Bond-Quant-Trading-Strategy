@@ -1,3 +1,19 @@
-This folder contains the final presentation summarizing the quantitative trading strategy project.
+# Final Presentation
 
-The presentation highlights the research question, methodology, key visualizations, regression results, and major findings from the analysis.
+This directory contains the final presentation for the emerging-market bond quantitative trading strategy project.
+
+The presentation summarizes:
+
+- The research question and economic motivation
+- Data and feature engineering
+- VIX-only OLS results
+- Three-factor OLS results
+- Ridge regression methodology
+- Out-of-sample model performance
+- Trading strategy results
+- Comparison with buy-and-hold EMB
+- Model risks and limitations
+- Potential extensions
+- Key takeaways
+
+A PDF version is included for convenient viewing directly through GitHub. The original PowerPoint file is also included for reference and contains extra footnotes.
