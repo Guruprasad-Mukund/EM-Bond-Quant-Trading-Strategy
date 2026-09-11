@@ -275,34 +275,13 @@ Future work could:
 
 ## Repository Structure
 
-EM-Bond-Quant-Trading-Strategy/
-│
-├── README.md
-├── requirements.txt
-├── .gitignore
-│
-├── data/
-│   ├── README.md
-│   ├── raw/
-│   │   ├── README.md
-│   │   └── Original market datasets
-│   └── processed/
-│       ├── README.md
-│       └── Merged market dataset
-│
-├── notebooks/
-│   ├── README.md
-│   └── EM_Bond_Quant_Trading_Strategy.ipynb
-│
-├── sql/
-│   ├── README.md
-│   ├── merge_market_data.sql
-│   └── Quant Trading Model SQL Documentation.pdf
-│
-└── presentation/
-    ├── README.md
-    └── Final project presentation
-
+- data/ — raw and processed market datasets
+- sql/ — SQL queries and annotated SQL documentation
+- notebooks/ — exploratory analysis, regression modeling, and backtesting
+- reports/ — detailed project methodology, results, and discussion
+- presentation/ — final project presentation
+- requirements.txt — Python packages required to run the analysis
+- .gitignore — files and folders excluded from version control
 
 ---
 
