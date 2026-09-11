@@ -57,8 +57,11 @@ The project uses today's market information to predict the **next trading day's 
 The main features are:
 
 em_return = log(EMB_t / EMB_t-1)
+
 oil_return = log(Oil_t / Oil_t-1)
+
 delta_vix = VIX_t - VIX_t-1
+
 delta_spread = Spread_t - Spread_t-1
 
 
