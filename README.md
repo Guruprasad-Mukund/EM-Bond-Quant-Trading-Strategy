@@ -18,9 +18,8 @@ The project progresses through three models:
 2. **Three-Factor OLS Regression**
 3. **Three-Factor Ridge Regression**
 
-Each model is evaluated using both statistical forecasting metrics and the performance of an out-of-sample **long-or-cash trading strategy**.
-
----
+**Each model is evaluated based on both how accurately it predicts next-day EMB returns and how well its predictions perform when used in a trading strategy.
+**---
 
 ## Research Question
 
@@ -40,15 +39,14 @@ Changes in **oil prices** can also affect emerging markets because many countrie
 
 These variables therefore provide different, although partially overlapping, measures of global macroeconomic and financial-market conditions.
 
-The purpose of the project is not only to determine whether these variables explain EMB returns statistically, but also whether their combined signals can produce economically useful trading decisions.
-
----
+**The purpose of the project is to test whether VIX, credit spreads, and oil have meaningful relationships with EMB returns individually and when combined, and whether those signals can be used to make useful trading decisions.
+**---
 
 # Data
 
 ## Time Period
 
-The dataset contains approximately **10 years of daily observations from 2016 through 2026**, resulting in more than 2,500 observations before feature engineering and missing-value removal.
+The dataset contains approximately **10 years of daily observations from 2016 through 2026**, resulting in more than 2,500 observations after feature engineering and missing-value removal.
 
 ## Variables
 
@@ -58,6 +56,8 @@ The dataset contains approximately **10 years of daily observations from 2016 th
 | vix | Cboe Volatility Index level | Daily first difference |
 | credit_spread | ICE BofA BB U.S. High Yield Option-Adjusted Spread | Daily first difference |
 | oil_price | U.S. crude oil price series | Daily log return |
+
+Note: Daily means change between yesterday's value and today's value. 
 
 The final merged dataset contains:
 
@@ -97,7 +97,6 @@ The following variables were constructed.
 
 EMB price returns are calculated as daily log returns:
 
-python
 df["em_return"] = np.log(
     df["emb_price"] / df["emb_price"].shift(1)
 )
@@ -119,7 +118,6 @@ $$
 
 Oil is also transformed into a daily log return:
 
-python
 df["oil_return"] = np.log(
     df["oil_price"] / df["oil_price"].shift(1)
 )
@@ -139,7 +137,6 @@ $$
 
 Because VIX is an index level rather than a directly traded asset price, the model uses the daily change in VIX rather than a return:
 
-python
 df["delta_vix"] = df["vix"].diff()
 
 
@@ -155,7 +152,6 @@ This variable captures changes in the level of market-implied volatility and ris
 
 The high-yield credit spread is already expressed as a spread, so the analysis uses its daily change:
 
-python
 df["delta_spread"] = df["credit_spread"].diff()
 
 
@@ -172,7 +168,6 @@ A positive value represents spread widening, while a negative value represents s
 
 The models use information observed at time t to predict the EMB return at time t+1.
 
-python
 df["target"] = df["em_return"].shift(-1)
 
 
@@ -204,7 +199,7 @@ The analysis included:
 
 ## Same-Day Correlations
 
-The correlation matrix showed the following approximate contemporaneous relationships:
+The correlation matrix showed the following approximate contemporaneous (same-day) relationships:
 
 | Relationship | Correlation |
 | --- | ---: |
@@ -261,7 +256,6 @@ The financial variables exhibited substantial skewness and heavy tails.
 
 Using pandas:
 
-python
 df[
     ["em_return", "oil_return", "delta_vix", "delta_spread"]
 ].kurtosis()
@@ -286,7 +280,7 @@ The dataset was divided chronologically into:
 
 The data were **not randomly shuffled** because the analysis is based on time-series observations.
 
-python
+
 split = int(len(df) * 0.7)
 
 train = df.iloc[:split].copy()
@@ -319,7 +313,6 @@ $$
 
 The estimated ΔVIX coefficient is approximately:
 
-text
 +0.0003
 
 
@@ -335,11 +328,10 @@ However, this interpretation should be considered suggestive rather than conclus
 
 Using **HC3 heteroskedasticity-robust standard errors**, the ΔVIX coefficient has a p-value of approximately:
 
-text
 0.181
 
 
-Therefore, the coefficient is **not statistically significant at the 5% level** under the robust specification.
+Therefore, the coefficient is **not statistically significant at the 5% level** under the robust HC3 specification.
 
 ---
 
@@ -412,9 +404,9 @@ One possible contributor is overlapping information among the predictors.
 
 In particular, ΔVIX and ΔCredit Spread have a correlation of approximately **0.46**, which can increase coefficient uncertainty.
 
-However, this should not be interpreted as evidence of extreme multicollinearity.
+Further, a large condition number of 84.1 suggests strong multicollinearity. 
 
-The model nevertheless performed substantially better as a **trading signal** than the single-factor VIX model.
+The model, as we later discuss, nevertheless performed substantially better as a **trading signal** than the single-factor VIX model.
 
 ---
 
@@ -456,7 +448,6 @@ This can reduce model sensitivity when predictors contain overlapping informatio
 
 Before estimating the Ridge model, each predictor is standardized using:
 
-python
 StandardScaler()
 
 
@@ -544,15 +535,14 @@ The procedure was:
 
 This resulted in:
 
-text
 alpha = 100
 
 
 The selected model retained almost all of the maximum training R² while applying substantially more coefficient shrinkage.
 
-This should be viewed as a modeling heuristic rather than a statistically unique or globally optimal value of alpha.
+This should be viewed as a modeling heuristic (choice/judgement) rather than a statistically unique or globally optimal value of alpha.
 
-A future extension would use **time-series cross-validation** within the training sample to select the Ridge penalty.
+A future extension would use **time-series cross-validation**, where we repeatedly test different alpha values on earlier and later portions of the training data” to select the Ridge penalty.
 
 ---
 
@@ -581,7 +571,6 @@ Each model generates a predicted EMB return for the next trading day.
 
 The trading rule is:
 
-text
 Predicted next-day EMB return > 0
 → Invest in EMB
 
@@ -591,15 +580,12 @@ Predicted next-day EMB return ≤ 0
 
 In Python:
 
-python
 signal = (predicted_return > 0).astype(int)
 
 
 The realized strategy return is:
 
-python
 strategy_return = signal * actual_next_day_emb_return
-
 
 Therefore:
 
@@ -613,7 +599,6 @@ $$
 
 where:
 
-text
 Signal = 1 → Hold EMB
 Signal = 0 → Hold cash
 
@@ -626,19 +611,16 @@ The strategy is **long-only** and never takes a short position in EMB.
 
 Because the strategy uses log returns, cumulative portfolio wealth is calculated using:
 
-python
 np.exp(strategy_return.cumsum())
 
 
 rather than:
 
-python
 (1 + strategy_return).cumprod()
 
 
 All strategies begin with a hypothetical portfolio value of:
 
-text
 $1.00
 
 
@@ -697,18 +679,18 @@ One of the main findings of the project is that **statistical forecasting accura
 
 All three models produced negative test R² values.
 
-A negative out-of-sample R² means the model performed worse at predicting the exact magnitude of next-day returns than a simple constant-mean prediction benchmark under squared-error loss.
+A negative test R² means the model was not very good at predicting exactly how large tomorrow’s EMB return would be.
 
-However, the trading strategy does not directly use the magnitude of the prediction.
+But the trading strategy does not care very much about the exact predicted return amount. It mainly uses whether the prediction is positive or negative.
 
 Instead, it converts each prediction into a binary decision:
 
-text
+
 Positive prediction → Invest
 Negative prediction → Stay in cash
 
 
-A model can therefore have weak return-magnitude predictions while still producing useful investment signals if the signs of its predictions systematically help the strategy participate in favorable periods or avoid unfavorable ones.
+A model can therefore have weak return-magnitude predictions while still producing useful investment signals if the signs of its predictions systematically help the strategy participate in favorable periods or avoid unfavorable ones. In other words, even if the model is bad at predicting the exact size of tomorrow’s return, it can still be useful if it gets the direction right often enough.
 
 This helps explain why the three-factor models achieved substantially stronger Sharpe ratios despite having negative test R² values.
 
@@ -751,7 +733,7 @@ Values near 2 generally indicate limited first-order residual autocorrelation.
 
 Values slightly below 2 suggest **mild positive first-order autocorrelation**, meaning consecutive regression errors may be slightly positively related.
 
-However, the statistics remain close to 2 and do not indicate strong first-order serial dependence.
+Since statistics were slightly below 2 (1.894 for model 1, 1.897 for model 2), there is some mildly positive first-order serial dependence.
 
 ---
 
@@ -823,35 +805,31 @@ EMB returns are calculated using historical closing prices rather than dividend-
 
 Because EMB makes regular cash distributions, the analysis measures **price returns rather than total investor returns**.
 
-An ex-dividend decline in the ETF price may therefore appear as a negative return even though an investor received a cash distribution.
-
+Because EMB pays cash distributions, its price can fall on distribution dates even though investors receive cash.
 As a result, both the trading strategy and the buy-and-hold benchmark may understate total investor returns.
 
 ---
 
 ## Transaction Costs
 
-The backtest assumes costless trading.
+The backtest assumes costless trading and that trades occur at the market price.
 
 It does not include:
 
 - Bid-ask spreads
 - Brokerage costs
-- Slippage
+- Slippage (difference between the expected trade price and the actual execution price)
 - Market impact
 - Taxes
 
-Because the strategy can move between EMB and cash repeatedly, transaction costs could reduce or potentially eliminate part of its apparent advantage over buy-and-hold.
-
----
+**Because the strategy trades more often than buy-and-hold, real-world trading costs could reduce or even eliminate some of its higher returns.
+**---
 
 ## Zero Cash Return
 
 When the strategy does not invest in EMB, cash is assumed to earn:
 
-text
 0%
-
 
 In reality, cash could earn a positive short-term interest rate such as a Treasury-bill or money-market yield.
 
@@ -882,9 +860,8 @@ Dollar strength can also be associated with:
 - Currency depreciation
 - Increased sovereign credit stress
 
-The current model does not directly incorporate a broad U.S. dollar or emerging-market FX factor.
-
----
+**The model does not directly include changes in the U.S. dollar or emerging-market currencies, which can also affect emerging-market bond returns.
+**---
 
 ## EMB Aggregates Many Countries
 
@@ -920,16 +897,6 @@ The model therefore assumes more stability in factor relationships than may exis
 
 ---
 
-## Execution Timing
-
-The predictors use daily market information at time t to predict the return at time t+1.
-
-A fully implementable strategy would also need to specify exactly when each predictor becomes observable and at what price the EMB trade can be executed.
-
-The current backtest does not explicitly model intraday execution timing.
-
----
-
 ## Ridge Alpha Selection
 
 The Ridge penalty was selected using a training-R²-based fit-regularization heuristic.
@@ -942,15 +909,15 @@ Although the testing data were not used as the formal selection criterion, a mor
 
 ## Rolling or Expanding Model Estimation
 
-Rather than estimating coefficients once using the entire training sample, the model could be periodically re-estimated.
+Rather than estimating coefficients once using the entire training sample, the model could be periodically re-estimated. This is more accurate than estimating the coefficients once and assuming the relationships stay the same forever.
 
 Possible approaches include:
 
-- Rolling-window estimation
-- Expanding-window estimation
-- Walk-forward backtesting
+- Rolling-window estimation: always train on a fixed recent period, such as the previous 3 years. As time moves forward, old data drop out and new data are added.
+- Expanding-window estimation: start with an initial training period, then keep adding new observations over time. Old data stay in the sample.
+- Walk-forward backtesting: repeatedly train the model using only data available up to that point, make predictions for the next period, then move forward and repeat.
 
-This would allow factor relationships to evolve as financial-market regimes change.
+The relationship between VIX, oil, credit spreads, and EMB may be different during a crisis, a low-rate environment, or a high-inflation environment. Re-estimating the model over time lets the coefficients adjust to those changing conditions. In other words, this would allow factor relationships to evolve as financial-market regimes change.
 
 ---
 
@@ -958,7 +925,7 @@ This would allow factor relationships to evolve as financial-market regimes chan
 
 A future model could incorporate:
 
-- A broad U.S. dollar index
+- A broad U.S. dollar index or DXY
 - Emerging-market currency returns
 - Country-specific exchange-rate movements
 
@@ -998,7 +965,6 @@ A more realistic strategy could explicitly incorporate:
 - Bid-ask spreads
 - Trading costs
 - Slippage
-- Turnover
 - Short-term Treasury or cash returns
 
 This would provide a more realistic estimate of implementable strategy performance.
@@ -1015,15 +981,7 @@ This would provide a more accurate comparison between the active strategy and lo
 
 ## Time-Series Cross-Validation for Ridge
 
-Instead of the current 99%-of-training-R² heuristic, the Ridge penalty could be selected using:
-
-python
-TimeSeriesSplit
-
-
-Alpha would be selected using validation periods inside the training sample.
-
-The final model could then be re-estimated on the complete training set and evaluated once on the untouched testing period.
+A more rigorous approach would be to split the training data itself into several earlier and later periods. I would try different alpha values and repeatedly check how well each one predicts the next period of data. Then I would choose the alpha that performs best across those validation periods. After choosing alpha, I would retrain Ridge using all of the original training data, and then test it one final time on the 30% test set that was never used during alpha selection. 
 
 ---
 
@@ -1155,7 +1113,7 @@ The results therefore illustrate an important distinction:
 
 At the same time, the results should not be interpreted as evidence of a deployable trading strategy without further testing.
 
-Transaction costs, dividend-adjusted returns, cash yields, execution timing, changing market regimes, and additional macro-financial factors would need to be incorporated before drawing stronger conclusions about real-world profitability.
+Transaction costs, dividend-adjusted returns, cash yields, changing market regimes, and additional macro-financial factors would need to be incorporated before drawing stronger conclusions about real-world profitability.
 
 ---
 
